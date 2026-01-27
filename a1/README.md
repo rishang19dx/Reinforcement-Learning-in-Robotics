@@ -233,14 +233,3 @@ policy, V, deltas, times, iters = value_iteration_with_tracking(env)
 ```
 
 ---
-
-## References
-
-- Sutton & Barto, "Reinforcement Learning: An Introduction" (Chapter 4)
-- [OpenAI Spinning Up - RL Intro](https://spinningup.openai.com/en/latest/spinningup/rl_intro.html)
-
----
-
-## Acknowledgements
-
-Thanks to Jagannath Prasad Sahoo ([@Jaggu2606](https://github.com/Jaggu2606)) and Dharmendra Sharma (TAs) for preparing this assignment.
