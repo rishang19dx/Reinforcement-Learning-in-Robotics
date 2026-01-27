@@ -82,10 +82,84 @@ Initially, you will see only the static environment (grid, UR5, obstacles, marke
 ```
 AR525-main/
 ├── main.py           # Main execution script with environment setup
-├── utils.py          # YOUR IMPLEMENTATION HERE - DP algorithms
+├── utils.py          # DP algorithms implementation
+├── analysis.py       # Extended analysis (convergence plots, stochastic env)
 ├── assest/           # 3D models for robot and environment
 └── README.md         # This file
 ```
+
+---
+
+## ✅ Implementation Status
+
+### Core Algorithms (utils.py)
+
+| Function | Status | Description |
+|----------|--------|-------------|
+| `policy_evaluation()` | ✅ | Iterative policy evaluation using Bellman expectation |
+| `q_from_v()` | ✅ | Q-value computation from state values |
+| `policy_improvement()` | ✅ | Greedy policy derivation |
+| `policy_iteration()` | ✅ | Complete PI with convergence tracking |
+| `value_iteration()` | ✅ | Complete VI with Bellman optimality |
+| `get_optimal_path()` | ✅ | Path extraction from policy |
+
+### Environment Features (GridEnv)
+
+- ✅ **Flexible grid size** - Works with any `rows × cols`
+- ✅ **Obstacle support** - Pass `obstacles` list to block states
+- ✅ **Dynamic start/goal** - Configurable start and goal states
+- ✅ **Part 6 ready** - Handles unseen environments with varied obstacles
+
+### Simulation (main.py)
+
+- ✅ Runs both Policy Iteration and Value Iteration
+- ✅ Displays comparison (iterations, time)
+- ✅ Visualizes value function as heatmap
+- ✅ Shows optimal path on grid
+- ✅ Moves UR5 robot using inverse kinematics
+- ✅ Draws green trail showing end-effector trajectory
+
+### Extended Analysis (analysis.py)
+
+| Feature | Description |
+|---------|-------------|
+| **Stochastic Transitions** | `StochasticGridEnv` with configurable slip probability |
+| **Convergence Plotting** | Bellman residual vs iterations |
+| **Reward Comparison** | Dense (-1/step) vs Sparse (0 until goal) |
+| **Policy Visualization** | Arrows with value function heatmap |
+
+**Generated Plots:**
+- `convergence_deterministic.png` - PI vs VI convergence
+- `policy_deterministic.png` - Optimal policy visualization
+- `stochastic_comparison.png` - Effect of slip probability
+- `reward_comparison.png` - Dense vs sparse rewards
+
+### Quick Start
+
+```bash
+# Run main simulation
+python main.py
+
+# Run extended analysis (generates plots)
+python analysis.py
+```
+
+### Sample Results
+
+```
+Policy Iteration: 10 iterations (0.0012s)
+Value Iteration:  10 iterations (0.0008s)
+Policies match: True
+
+Optimal Policy:
+ S  →  ↓  ↓  ↓  ↓ 
+ ↓  ↓  ↓  ↓  ↓  ↓ 
+ ↓  ↓  ↓  ↓  ↓  ↓ 
+ ↓  ↓  ↓  ↓  ↓  ↓ 
+ →  →  →  →  →  G 
+```
+
+---
 
 ## Code Guide
 
