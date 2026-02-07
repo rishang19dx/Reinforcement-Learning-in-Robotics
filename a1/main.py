@@ -19,10 +19,11 @@ Author: Assignment 1 - AR525
 import pybullet as p
 import pybullet_data
 import numpy as np
+import matplotlib.pyplot as plt
 import time
 import os
 import sys
-
+import argparse
 
 from utils import (
     GridEnv,
@@ -66,9 +67,9 @@ def draw_grid_lines(rows, cols, grid_size=0.10, table_center=[0, -0.3, 0.65]):
         p.addUserDebugLine([x, y_start, z], [x, y_end, z], line_color, line_width)
 
 
-def draw_value_heatmap(env, V, grid_size=0.10, table_center=[0, -0.3, 0.65]):
+def draw_value_text(env, V, grid_size=0.10, table_center=[0, -0.3, 0.65]):
     """
-    Draw a heatmap visualization of the value function on the grid.
+    Draw text visualization of the value function on the grid.
     
     Args:
         env: GridEnv environment
@@ -104,7 +105,64 @@ def draw_value_heatmap(env, V, grid_size=0.10, table_center=[0, -0.3, 0.65]):
         # Draw value as text
         value_text = f"{V[s]:.1f}"
         p.addUserDebugText(value_text, [pos[0], pos[1], pos[2] + 0.03], 
-                          textColorRGB=[0, 0, 0], textSize=0.8)
+                          textColorRGB=color, textSize=0.8)
+
+def show_value_heatmap(V, path, rows, cols, title="Value Function Heatmap"):
+    """
+    Display a optimal path and 2D heatmap of the value function.
+
+    Args:
+        V: value function (1D array of size rows*cols)
+        rows: number of grid rows
+        cols: number of grid columns
+    """
+    V_grid = V.reshape(rows, cols)
+    plt.ion()
+    fig, ax = plt.subplots(figsize=(6, 6))
+
+    # Heatmap
+    im = ax.imshow(V_grid, cmap="jet", origin="lower")
+    plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+    mean_val = np.mean(V_grid)
+    for r in range(rows):
+        for c in range(cols):
+            ax.text(
+                c, r, f"{V_grid[r, c]:.1f}",ha="center", va="center",
+                color="white", fontsize=11
+            )
+
+    # ---- Draw optimal path ----
+    if path is not None and len(path) > 1:
+        path_rc = [(s // cols, s % cols) for s in path]
+
+        ys = [r for r, c in path_rc]
+        xs = [c for r, c in path_rc]
+
+        # Path line
+        ax.plot(xs, ys, color="lime", linewidth=2, label="Optimal Path")
+
+        # Direction arrows
+        for i in range(len(xs) - 1):
+            ax.arrow(
+                xs[i], ys[i],xs[i+1] - xs[i], ys[i+1] - ys[i],
+                head_width=0.15, head_length=0.15,
+                fc="lime", ec="lime",length_includes_head=True
+            )
+
+        ax.legend(loc="lower right")
+
+    ax.set_title(title)
+    ax.set_xlabel("Columns")
+    ax.set_ylabel("Rows")
+    ax.set_xticks(range(cols))
+    ax.set_yticks(range(rows))
+    ax.set_xticklabels([])
+    ax.set_yticklabels([])
+    ax.grid(False)
+    plt.tight_layout()
+    plt.show(block=False)
+    plt.pause(0.001)
+
 
 
 def draw_optimal_path(path, env, grid_size=0.10, table_center=[0, -0.3, 0.65]):
@@ -184,7 +242,7 @@ def move_robot_along_path(ur5_id, path, env, grid_size=0.10, table_center=[0, -0
         ee_pos = ee_state[0]
         
         if prev_pos is not None:
-            p.addUserDebugLine(prev_pos, ee_pos, trail_color, lineWidth=3)
+            p.addUserDebugLine(prev_pos, ee_pos, trail_color, lineWidth=5)
         
         prev_pos = ee_pos
         
@@ -241,9 +299,13 @@ def print_value_function(env, V):
 
 if __name__ == "__main__":
     
+    parser = argparse.ArgumentParser(description="AR525 Assignment 1: Grid Navigation using DP")
+    parser.add_argument("--rows", type=int, default=5, help="Number of rows in the grid")
+    parser.add_argument("--cols", type=int, default=6, help="Number of columns in the grid")
+    args = parser.parse_args()
 
-    ROWS = 5
-    COLS = 6
+    ROWS = args.rows
+    COLS = args.cols
     START = 0
     GOAL = ROWS * COLS - 1
     GAMMA = 0.99
@@ -379,13 +441,16 @@ if __name__ == "__main__":
     # ==========================================================================
     
     # Draw value function heatmap
-    draw_value_heatmap(env, optimal_V)
+    draw_value_text(env, optimal_V)
     
     # Draw optimal path on grid
     draw_optimal_path(optimal_path, env)
     
+    #Show value function heatmap
+    show_value_heatmap(optimal_V, optimal_path,env.rows, env.cols)
+
     # Pause before robot movement
-    print("\n>>> Starting robot movement in 2 seconds...")
+    print("\n>>> Starting robot movement in 5 seconds...")
     time.sleep(2)
     
     # Move robot along optimal path
