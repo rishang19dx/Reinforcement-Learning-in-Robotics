@@ -36,6 +36,19 @@ python analysis.py
 
 ---
 
+---
+
+## For extra part
+The mobile base first moves to the position from which arm can reach to the goal.
+```bash
+# Install dependencies
+cd mobile_stand
+# Run main simulation (PyBullet visualization)
+python3 main_mobile.py
+```
+
+---
+
 ## Algorithm Intuition
 
 ### The Problem
