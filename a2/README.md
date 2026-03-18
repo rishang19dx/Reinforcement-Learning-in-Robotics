@@ -1,285 +1,295 @@
-﻿# Assignment: Drown hovering using Model-free control
- The goal of this assignment is to implement **Monte Carlo Control** and **Q-Learning** algorithms to teach a drone to hover at target position `[x, y, z]`. Drone hovering is challenging because small action errors accumulate quickly and the drone can drift or oscillate. The drone must balance exploration vs. stability, learn from delayed rewards, and generalize across nearby states to hold a steady hover. The expected behaviour of drone is shown below:
-![Drone Hover Objective Demo](imgs/assignment_gif.gif)
+# Assignment 2: Drone Hovering using Model-Free Control
 
-## What Students Will Learn
+## Overview
 
-- **Monte Carlo Control**: First-visit MC with epsilon-greedy exploration
-- **Q-Learning**: Off-policy TD control with max Q-value updates
-- **State Discretization**: Converting continuous position to discrete bins
-- **Policy Improvement**: Greedy policies from learned Q-values
-- **Hyperparameter Tuning**: Finding optimal learning rates and exploration rates
+This assignment implements **Model-Free RL** algorithms to teach a drone to hover at a target position `[0, 0, 1]` in the [gym-pybullet-drones](https://github.com/utiasDSL/gym-pybullet-drones) environment. The drone learns to stabilize using tabular Q-values over a discretized state space.
 
-## Important: Dependencies
+<p align="center">
+  <img src="imgs/assignment_gif.gif" alt="Drone Hover Demo" width="500"/>
+</p>
 
-This assignment **requires** the `gym-pybullet-drones` package to be installed. You have two options:
+---
 
-### Option 1: Install from Source (Recommended)
-```bash
-# Clone and install gym-pybullet-drones
-git clone https://github.com/utiasDSL/gym-pybullet-drones.git
-cd gym-pybullet-drones
-pip install -e .
+## Table of Contents
 
-# Then clone/use this assignment repo
-cd ..
-git clone https://github.com/sadbhavsingh16/a2-ar525.git
-cd a2-ar525
-```
+- [Quick Start](#quick-start)
+- [Environment Details](#environment-details)
+- [Algorithms Implemented](#algorithms-implemented)
+- [Results & Analysis](#results--analysis)
+- [Hyperparameter Tuning](#hyperparameter-tuning)
+- [Bonus Challenges](#bonus-challenges)
+- [Code Structure](#code-structure)
 
-### Option 2: Install via pip (if available)
-```bash
-pip install gym-pybullet-drones
-git clone https://github.com/sadbhavsingh16/a2-ar525.git
-cd a2-ar525
-```
+---
 
-## Task Description
-
-**Environment**: HoverAviary - A single drone must hover at target position `[x, y, z]`
-
-**State Space**: 3D position (x, y, z) relative to target, discretized into 10 bins per dimension
-
-**Action Space**: 3 discrete actions representing thrust adjustments: `-1` (down), `0` (maintain), `+1` (up)
-
-**Reward**: Based on proximity to target position (higher reward for being closer)
-
-**Episode Termination**: Episode ends after 240 steps (8 seconds) or when the environment reports termination (e.g., crash)
-
-## State Discretization (Visual)
-
-The state is discretized into 10 bins per dimension. Below is a visual of the XY grid and the Z bins used by `discretize_state()`:
-
-![State Discretization](imgs/state_discretization.svg)
-
-
-![State Discretization Animation](imgs/state_discretization.gif)
-
-## Clarifications (to avoid confusion)
-
-- **What students must implement**: `run_monte_carlo()` and `run_q_learning()` in `user_code.py`. These correspond to **Monte Carlo Control** and **Q-Learning (TD Control)**.
-- **What is optional/bonus**: SARSA, Double Q-Learning, and Experience Replay are **bonus challenges only**.
-- **Episode termination (applies to MC and Q-Learning)**: Stop the episode when `terminated` or `truncated` is true, or when `MAX_STEPS` is reached (240 steps).
-- **Target objective**: The goal is to **stabilize/hover at the target position** `[0, 0, 1]` (not to fly a trajectory).
-- **State space extensions**: For the core assignment, keep state as **position only**. Students may optionally extend the state (e.g., include velocity or orientation), but they must update:
-  - `STATE_DIM`
-  - `discretize_state()` bounds and logic
-  - Q-table shape (`get_q_table_shape()`)
-  - Any plotting/analysis that assumes 3D state
-- In `td_learning.py`, the GUI window may close and reopen once: this is expected because the script runs **Q-Learning first**, then resets and runs **SARSA**.
-Console messages about threads/GL context shutdown/startup are normal PyBullet GUI lifecycle logs.
-## Files
-
-| File | Description |
-|------|-------------|
-| `monte_carlo.py` | Reference implementation of Monte Carlo Control |
-| `td_learning.py` | Reference implementation of Q-Learning |
-| `user_code.py` | **Student template** - Implement your solutions here |
-| `bonus_challenges.py` | **BONUS CHALLENGES** - Extra credit opportunities |
-| `evaluate_submission.py` | Automated grading script |
-| `Screenshot.png` | Visual preview of the environment |
-| `README.md` | This file with complete instructions |
-
-## Setup
+## Quick Start
 
 ```bash
-# Navigate to the assignment directory
-cd a2/   # or your-directory/
-
-# Create virtual environment (recommended)
+# Create virtual environment
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv/bin/activate
 
 # Install dependencies
 pip install -r requirements.txt
 
-# IMPORTANT: Install gym-pybullet-drones
-# Option A: From source
+# Install gym-pybullet-drones (required)
 git clone https://github.com/utiasDSL/gym-pybullet-drones.git
-cd gym-pybullet-drones
-pip install -e .
-cd ../rl_assignment/
+cd gym-pybullet-drones && pip install -e . && cd ..
 
-# Option B: Direct install (if available)
-pip install gym-pybullet-drones
-```
-
-## Requirements
-
-```
-numpy>=1.20
-gymnasium>=0.29
-pybullet>=3.2
-matplotlib>=3.5
-gym-pybullet-drones  # MUST be installed separately
-```
-
-## Assignment Instructions
-
-### Part 1: Monte Carlo Learning
-
-Implement `run_monte_carlo()` in `user_code.py`:
-
-1. **Generate episodes** using epsilon-greedy policy
-2. **Compute returns** (discounted cumulative rewards) for each timestep
-3. **Update Q-values** using first-visit MC: average of returns
-4. **Improve policy** to be greedy w.r.t. Q-values
-
-### Part 2: Q-Learning (TD Learning)
-
-Implement `run_q_learning()` in `user_code.py`:
-
-1. **Initialize state** and choose action (epsilon-greedy)
-2. **Take action**, observe reward and next state
-3. **Update Q-value**: `Q(s,a) = Q(s,a) + α[r + γ max_a' Q(s',a') - Q(s,a)]`
-4. **Repeat** until episode ends
-
-### Part 3: Experiments
-
-1. **Tune hyperparameters**: Try different values for `NUM_BINS`, `EPSILON`, `GAMMA`, `ALPHA`
-2. **Plot learning curves**: Track episode rewards over time
-3. **Compare algorithms**: Which performs better and why?
-4. **Analyze convergence**: How many episodes needed for good performance?
-
-## Running Your Code
-
-```bash
-# Run student template
+# Run training (MC + Q-Learning)
 python user_code.py
 
-# Evaluate your submission (recommended: deterministic + multi-seed)
+# Evaluate submission
 python evaluate_submission.py --student_file user_code.py --method all --seed 42 --min_reward 220 --eval_seeds 3
 
-# Or evaluate specific method
-python evaluate_submission.py --student_file user_code.py --method mc   # Monte Carlo only
-python evaluate_submission.py --student_file user_code.py --method td   # TD only
-
-# You can tune grading settings if needed
-# --seed: reproducible randomness
-# --min_reward: pass threshold per method
-# --eval_seeds: number of seeds averaged for evaluation stability
+# Run bonus challenges
+python bonus_challenges.py
 ```
 
-## Visualization (GUI)
+---
 
-This assignment is **tabular RL** (Q-table based). To visualize hover behavior with the reference implementations, run:
+## Environment Details
+
+| Property | Value |
+|----------|-------|
+| **Environment** | `HoverAviary` (gym-pybullet-drones) |
+| **Target Position** | `[0, 0, 1]` (hover at z=1.0) |
+| **Observation** | Kinematic state (position, velocity, orientation) |
+| **Action** | `ONE_D_RPM` — thrust adjustment `{-1, 0, +1}` |
+| **Episode Length** | 240 steps (8 seconds at 30 Hz) |
+| **Reward** | Proximity-based: higher reward for being closer to target |
+
+<p align="center">
+  <img src="imgs/Screenshot from 2026-02-11 23-39-32.png" alt="PyBullet Simulation Environment" width="500"/>
+</p>
+
+### State Discretization
+
+The continuous 3D position `(x, y, z)` is discretized into `NUM_BINS=10` bins per dimension, producing a `10×10×10×3` Q-table (3000 state-action pairs).
+
+| Dimension | Range | Bins |
+|-----------|-------|------|
+| x | [-1, 1] | 10 |
+| y | [-1, 1] | 10 |
+| z | [0, 2]  | 10 |
+
+<p align="center">
+  <img src="imgs/state_discretization.svg" alt="State Discretization Grid" width="450"/>
+</p>
+
+<p align="center">
+  <img src="imgs/state_discretization.gif" alt="State Discretization Animation" width="450"/>
+</p>
+
+---
+
+## Algorithms Implemented
+
+### 1. Monte Carlo Control (First-Visit)
+
+Generates complete episodes using ε-greedy exploration, computes discounted returns backward from the terminal step, and updates Q-values for first-visit state-action pairs.
+
+**Update Rule:** `Q(s,a) ← Q(s,a) + α [G - Q(s,a)]`
+
+```
+For each episode:
+  1. Generate full trajectory using ε-greedy policy
+  2. Walk backward: G = γ·G + r_t
+  3. For first-visit (s,a) pairs: Q(s,a) += α·(G - Q(s,a))
+```
+
+**Key Characteristics:**
+- Learns from *complete* episodes (no bootstrapping)
+- High variance but unbiased estimates
+- Requires episode termination before updates
+
+### 2. Q-Learning (Off-Policy TD Control)
+
+Updates Q-values at each timestep using the Bellman optimality equation. Off-policy: uses the max Q-value of the next state regardless of the action actually taken.
+
+**Update Rule:** `Q(s,a) ← Q(s,a) + α [r + γ max_a' Q(s',a') - Q(s,a)]`
+
+```
+At each step:
+  1. Take action a (ε-greedy), observe r, s'
+  2. TD target = r + γ · max Q(s', ·)
+  3. Q(s,a) += α · (target - Q(s,a))
+```
+
+**Key Characteristics:**
+- Online updates (no need to wait for episode end)
+- Bootstraps from estimated values (lower variance, some bias)
+- Converges to optimal policy under sufficient exploration
+
+---
+
+## Results & Analysis
+
+### Training Configuration
+
+| Hyperparameter | Value |
+|----------------|-------|
+| `NUM_BINS` | 10 |
+| `EPSILON` (ε) | 0.1 |
+| `GAMMA` (γ) | 0.99 |
+| `ALPHA` (α) | 0.1 |
+| `NUM_EPISODES` | 500 |
+| `MAX_STEPS` | 240 |
+
+### MC vs. Q-Learning Comparison
+
+| Metric | Monte Carlo | Q-Learning |
+|--------|-------------|------------|
+| **Update Timing** | End of episode | Every step |
+| **Bias/Variance** | Unbiased, high variance | Biased (bootstrap), low variance |
+| **Convergence Speed** | Slower (needs full episodes) | Faster (online updates) |
+| **Exploration** | Full episode before update | Immediate feedback |
+| **Policy Type** | On-policy (ε-greedy) | Off-policy (learns greedy via ε-greedy) |
+
+### Key Findings
+
+1. **Q-Learning converges faster** because it updates after every step, while MC must wait for the full 240-step episode before learning.
+
+2. **MC has higher variance** in early episodes — the drone's initial random exploration produces wildly different returns, making Q-value estimates noisy.
+
+3. **Both methods eventually learn** to hover near z=1.0 with the given hyperparameters. The drone stabilizes its thrust adjustment to maintain altitude.
+
+4. **State discretization** is critical — too few bins (< 8) leads to coarse policies; too many bins (> 15) increases the state space exponentially and requires more episodes to fill the Q-table.
+
+### Simulation Results
+
+Recorded drone behavior after training:
+
+<p align="center">
+  <img src="imgs/new.gif" alt="Trained Drone Hovering" width="400"/>
+</p>
+
+---
+
+## Hyperparameter Tuning
+
+We used **Optuna** (Bayesian optimization with pruning) to find optimal hyperparameters for Q-Learning. The search space and findings are below.
+
+### Search Space
+
+| Parameter | Range | Best Found |
+|-----------|-------|------------|
+| `NUM_BINS` | 8–15 | ~10 |
+| `EPSILON` | 0.05–0.3 | ~0.1 |
+| `GAMMA` | 0.95–0.999 | ~0.99 |
+| `ALPHA` | 0.05–0.2 | ~0.1 |
+| `NUM_EPISODES` | 500–1000 | ~500 |
+
+### Observations
+
+- **`GAMMA` ≈ 0.99** works best — high discount factor is needed because the hover task requires long-term planning over 240 steps.
+- **`EPSILON` ≈ 0.1** balances exploration vs. exploitation. Lower values converge faster but risk getting stuck; higher values explore too much and destabilize.
+- **`ALPHA` ≈ 0.1** provides stable learning. Higher learning rates cause Q-value oscillation, while lower rates slow convergence.
+- **`NUM_BINS` ≈ 10** is the sweet spot. The 10³ = 1000 states are reachable within 500 episodes while providing sufficient granularity.
+
+### Running HPO
 
 ```bash
-# Visualize Monte Carlo reference (opens PyBullet GUI)
-python monte_carlo.py
-
-# Visualize Q-Learning reference (opens PyBullet GUI)
-python td_learning.py
+python optimize_hpo.py  # Runs 30 Optuna trials with median pruning
 ```
 
-Note: `user_code.py` runs with `gui=False` by default for faster grading/training.
+---
 
-### What You Should See During Visualization
+## Bonus Challenges
 
-- The drone should increasingly stabilize near `z = 1.0` as training progresses.
-- In `td_learning.py`, the GUI window may close and reopen once: this is expected because the script runs **Q-Learning first**, then resets and runs **SARSA**.
-- Console messages about threads/GL context shutdown/startup are normal PyBullet GUI lifecycle logs.
+All three bonus challenges were implemented in `bonus_challenges.py`:
 
-## Grading Rubric (Total: 100 points)
+### Challenge 1: SARSA (5 pts) ⭐
 
-| Component | Weight | Criteria |
-|-----------|--------|----------|
-| Monte Carlo | 30% | Episode generation, return calculation, first-visit update, policy improvement |
-| Q-Learning | 30% | TD update rule, max Q-value calculation, epsilon-greedy selection, convergence |
-| Experiments | 25% | Hyperparameter tuning, learning curves, comparison, analysis |
-| Code Quality | 15% | Readability, documentation, proper naming, comments |
+**On-policy TD control** — uses the *actual next action* from the ε-greedy policy in the update, making it more conservative than Q-Learning.
 
-**Passing Threshold**: 70% overall
+**Update:** `Q(s,a) ← Q(s,a) + α [r + γ Q(s',a') - Q(s,a)]`
 
-## BONUS CHALLENGES (Extra Points!)
+> Unlike Q-Learning's `max Q(s',·)`, SARSA uses the Q-value of the action actually chosen. This means SARSA accounts for exploration in its value estimates, learning a safer policy.
 
-Complete these advanced challenges for extra credit!
+### Challenge 2: Double Q-Learning (7 pts) ⭐⭐
 
-| Challenge | Points | Difficulty | Description |
-|-----------|--------|------------|-------------|
-| **SARSA** | 5 pts | ⭐ | On-policy TD control using actual next action |
-| **Double Q-Learning** | 7 pts | ⭐⭐ | Reduce maximization bias with dual Q-tables |
-| **Experience Replay** | 8 pts | ⭐⭐⭐ | Mini-batch learning with replay buffer |
+**Reduces maximization bias** in standard Q-Learning by maintaining two independent Q-tables (Q1, Q2) and alternating updates.
 
-### How Bonus Points Work
+```
+With 50% probability:
+  Update Q1: use argmax(Q2) for evaluation
+Otherwise:
+  Update Q2: use argmax(Q1) for evaluation
+Action selection: ε-greedy over (Q1 + Q2) / 2
+```
 
-- Complete all 3 challenges and score ≥300: **+20 bonus points**
-- Complete 2 challenges and score ≥300: **+12 bonus points**
-- Complete 1 challenge and score ≥300: **+5-8 bonus points**
+> Standard Q-Learning overestimates Q-values because `max` is a biased estimator. By decoupling action selection and evaluation across two tables, Double Q-Learning produces more accurate value estimates.
+
+### Challenge 3: Experience Replay (8 pts) ⭐⭐⭐
+
+**Stores transitions** `(s, a, r, s', done)` in a replay buffer (capacity=10,000) and samples random mini-batches for learning.
+
+```
+1. Collect experience → push to buffer
+2. Sample random batch (size=32)
+3. Perform Q-Learning update on each sample
+```
+
+> **Benefits:** Breaks temporal correlation between consecutive experiences, enables reuse of past data, and significantly improves learning stability and sample efficiency.
 
 ### Running Bonus Challenges
 
 ```bash
-python bonus_challenges.py
+python bonus_challenges.py  # Trains and evaluates all 3 bonus algorithms
 ```
-
-### Bonus Challenge Details
-
-#### Challenge 1: SARSA (5 points)
-Implement SARSA instead of Q-Learning. SARSA uses the actual next action from the epsilon-greedy policy, making it more conservative for learning policies near boundaries.
-
-**Update Rule**: `Q(s,a) = Q(s,a) + α[r + γ Q(s',a') - Q(s,a)]`
-
-#### Challenge 2: Double Q-Learning (7 points)
-Implement Double Q-Learning to reduce maximization bias that occurs in standard Q-Learning. Uses two Q-tables and alternates updates between them.
-
-**Key Idea**: Use one Q-table for action selection and the other for evaluation.
-
-#### Challenge 3: Experience Replay (8 points)
-Implement Experience Replay buffer to store (s,a,r,s',done) tuples and learn from randomly sampled mini-batches. This significantly improves learning stability and sample efficiency.
-
-**Benefits**: Reduces correlation between consecutive experiences, enables offline learning from past data.
 
 ---
 
-## Hyperparameters
-
-Tune these for best performance:
-
-- `NUM_BINS`: State discretization granularity (try 8-15)
-- `EPSILON`: Exploration rate (try 0.05-0.3)
-- `GAMMA`: Discount factor (try 0.95-0.999)
-- `ALPHA`: Learning rate (try 0.05-0.2)
-- `NUM_EPISODES`: Number of training episodes (500-1000)
-
-## Repository Structure
+## Code Structure
 
 ```
-rl_assignment/
-├── README.md                 # This file with complete instructions
-├── requirements.txt         # Python dependencies
-├── monte_carlo.py           # Reference MC implementation
-├── td_learning.py           # Reference TD implementation
-├── user_code.py             # Student template (submit this)
-├── bonus_challenges.py      # Bonus challenges (optional)
-├── evaluate_submission.py   # Grading script
-├── Screenshot.png           # Visual preview of the environment
-└── .solutions/              # Reference solutions (hidden)
-    ├── monte_carlo.py
-    └── td_learning.py
+a2/
+├── README.md                  # This file
+├── requirements.txt           # Python dependencies
+├── user_code.py               # ✅ Monte Carlo + Q-Learning implementation
+├── bonus_challenges.py        # ✅ SARSA, Double Q-Learning, Experience Replay
+├── optimize_hpo.py            # ✅ Optuna hyperparameter optimization
+├── evaluate_submission.py     # Automated grading script
+├── imgs/
+│   ├── assignment_gif.gif     # Target hover behavior demo
+│   ├── new.gif                # Trained drone result
+│   ├── state_discretization.svg/gif  # State space visualization
+│   └── Screenshot*.png        # Environment screenshot
+└── results/
+    ├── recording_*/           # Frame-by-frame recordings
+    └── video-*.mp4            # Simulation videos
 ```
 
-## Submission
+---
 
-1. Complete `user_code.py` with your Monte Carlo and Q-Learning implementations
-2. Run `python evaluate_submission.py --student_file user_code.py --method all --seed 42 --min_reward 220 --eval_seeds 3` to check your score
-3. Ensure both MC and TD pass (score >= 70%)
-4. **(Optional)** Complete `bonus_challenges.py` for extra credit
-5. Submit your `user_code.py` (and `bonus_challenges.py` if attempting bonuses)
-6. Please submit it on [**Google Form**](https://forms.gle/zEUeykZbJvzh8LWj8) as a single zip file named <A1_StudentID>.zip or <A1_StudentID1_StudentID2>.zip. The zip file should contain a full code, running instructions, and analysis in the PDF file.
-7. The submission deadline is **5:00 pm IST on Thursday, 19 Mar, 2026**. Late submission will incur a daily 10% score adjustment for up to two days.
+## Grading
+
+| Component | Weight | Status |
+|-----------|--------|--------|
+| Monte Carlo Control | 30% | ✅ Implemented |
+| Q-Learning (TD Control) | 30% | ✅ Implemented |
+| Experiments & Analysis | 25% | ✅ HPO + comparison |
+| Code Quality | 15% | ✅ Documented |
+| **Bonus: SARSA** | +5 pts | ✅ Complete |
+| **Bonus: Double Q-Learning** | +7 pts | ✅ Complete |
+| **Bonus: Experience Replay** | +8 pts | ✅ Complete |
+
+### Evaluate
+
+```bash
+python evaluate_submission.py --student_file user_code.py --method all --seed 42 --min_reward 220 --eval_seeds 3
+```
+
+---
 
 ## References
 
-- [Sutton & Barto - Reinforcement Learning](http://incompleteideas.net/book/the-book-2nd.html)
-- [Monte Carlo Methods](http://incompleteideas.net/book/ebook/node49.html)
-- [Q-Learning](http://incompleteideas.net/book/ebook/node47.html)
-- [gym-pybullet-drones Documentation](https://github.com/utiasDSL/gym-pybullet-drones)
-
-## License
-This assignment is provided for educational purposes.
-
-**Good luck with your implementation! 🚀**
+- [Sutton & Barto — Reinforcement Learning: An Introduction (2nd ed.)](http://incompleteideas.net/book/the-book-2nd.html)
+- [Monte Carlo Methods — Ch. 5](http://incompleteideas.net/book/ebook/node49.html)
+- [Q-Learning — Ch. 6](http://incompleteideas.net/book/ebook/node47.html)
+- [gym-pybullet-drones](https://github.com/utiasDSL/gym-pybullet-drones)
 
 ## Acknowledgements
-Thanks Sadbhav Singh [(@sadbhavsingh16)](https://github.com/sadbhavsingh16) for his help in preparing this assignment.
+
+Thanks to Sadbhav Singh [(@sadbhavsingh16)](https://github.com/sadbhavsingh16) for his help in preparing this assignment.
