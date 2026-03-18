@@ -7,6 +7,7 @@ This repository contains assignments for the course **AR525: Reinforcement Learn
 | Assignment | Topic | Status |
 |------------|-------|--------|
 | [A1](./a1/) | Dynamic Programming Algorithms | ✅ Complete |
+| [A2](./a2/) | Model-Free Control (Monte Carlo & Q-Learning) | ✅ Complete |
 
 ---
 
@@ -25,6 +26,29 @@ Implements **Policy Iteration** and **Value Iteration** for robotic path plannin
 cd a1
 python main.py      # Run simulation
 python analysis.py  # Generate analysis plots
+```
+
+---
+
+## A2: Drone Hovering using Model-Free Control
+
+Implements **Monte Carlo Control** and **Q-Learning** to teach a drone to hover at a target position. The drone learns to stabilize at `[0, 0, 1]` using tabular RL with state discretization in a PyBullet drone simulator.
+
+**Key Features:**
+- First-visit Monte Carlo Control with epsilon-greedy exploration
+- Off-policy Q-Learning (TD Control)
+- State discretization of continuous 3D position into discrete bins
+- Hyperparameter tuning and learning curve analysis
+- Bonus challenges: SARSA, Double Q-Learning, Experience Replay
+
+```bash
+cd a2
+pip install -r requirements.txt
+python user_code.py                # Run student implementation
+python evaluate_submission.py \
+  --student_file user_code.py \
+  --method all --seed 42           # Evaluate submission
+python bonus_challenges.py         # Run bonus challenges
 ```
 
 ---
