@@ -530,7 +530,7 @@ if __name__ == "__main__":
     p.loadURDF("plane.urdf")
 
     # Load mobile robot
-    mobile_ur5_path = "../assest/mobile_ur5.urdf"
+    mobile_ur5_path = "/home/rishang/Desktop/Insti_Stuff/Jan26-6th Sem/RL/ar525-master/a1/assest/mobile_ur5.urdf"
     start_pos = state_to_position(env.start, env.rows, env.cols, GRID_SIZE)
     start_orn = p.getQuaternionFromEuler([0, 0, 0])
     
