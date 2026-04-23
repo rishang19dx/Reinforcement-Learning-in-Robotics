@@ -1,0 +1,32 @@
+{
+    "config_1": {
+        "name": "Baseline",
+        "learning_rate": 3e-4,
+        "buffer_size": 1000000,
+        "batch_size": 256,
+        "tau": 0.005,
+        "gamma": 0.99,
+        "ent_coef": "auto",
+        "timesteps": 500000
+    },
+    "config_2": {
+        "name": "High Exploration",
+        "learning_rate": 1e-3,
+        "buffer_size": 500000,
+        "batch_size": 128,
+        "tau": 0.01,
+        "gamma": 0.98,
+        "ent_coef": 0.2,
+        "timesteps": 500000
+    },
+    "config_3": {
+        "name": "Supercharged Jumper",
+        "learning_rate": 3e-4,
+        "buffer_size": 1000000,
+        "batch_size": 256,
+        "tau": 0.005,
+        "gamma": 0.995,
+        "ent_coef": "auto",
+        "timesteps": 1000000
+    }
+}

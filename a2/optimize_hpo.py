@@ -116,7 +116,7 @@ if __name__ == "__main__":
     # Suppress verbose pybullet outputs by redirecting stdout inside Optuna indirectly or just ignore
     print("Starting Optuna Hyperparameter Optimization...")
     study = optuna.create_study(direction='maximize', pruner=optuna.pruners.MedianPruner(n_startup_trials=5, n_warmup_steps=100))
-    study.optimize(objective, n_trials=30)
+    study.optimize(objective, n_trials=10)
     
     print("\\n\\n=========================================")
     print("BEST HYPERPARAMETERS FOUND:")

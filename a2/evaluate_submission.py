@@ -378,7 +378,7 @@ def main():
     print()
     
     # Initialize environment
-    env = HoverAviary(obs=ObservationType.KIN, act=ActionType.ONE_D_RPM, gui=False)
+    env = HoverAviary(obs=ObservationType.KIN, act=ActionType.ONE_D_RPM, gui=True)
     
     mc_results = {}
     td_results = {}
@@ -386,7 +386,7 @@ def main():
     # Evaluate MC
     if args.method in ["mc", "all"]:
         env.close()
-        env = HoverAviary(obs=ObservationType.KIN, act=ActionType.ONE_D_RPM, gui=False)
+        env = HoverAviary(obs=ObservationType.KIN, act=ActionType.ONE_D_RPM, gui=True)
         mc_results = evaluate_mc_student(
             env,
             student_module,
@@ -398,7 +398,7 @@ def main():
     # Evaluate TD
     if args.method in ["td", "all"]:
         env.close()
-        env = HoverAviary(obs=ObservationType.KIN, act=ActionType.ONE_D_RPM, gui=False)
+        env = HoverAviary(obs=ObservationType.KIN, act=ActionType.ONE_D_RPM, gui=True)
         td_results = evaluate_td_student(
             env,
             student_module,

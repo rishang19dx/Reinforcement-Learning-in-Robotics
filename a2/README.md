@@ -199,7 +199,7 @@ python optimize_hpo.py  # Runs 30 Optuna trials with median pruning
 
 All three bonus challenges were implemented in `bonus_challenges.py`:
 
-### Challenge 1: SARSA (5 pts) ⭐
+### Challenge 1: SARSA (5 pts)
 
 **On-policy TD control** — uses the *actual next action* from the ε-greedy policy in the update, making it more conservative than Q-Learning.
 
@@ -207,7 +207,7 @@ All three bonus challenges were implemented in `bonus_challenges.py`:
 
 > Unlike Q-Learning's `max Q(s',·)`, SARSA uses the Q-value of the action actually chosen. This means SARSA accounts for exploration in its value estimates, learning a safer policy.
 
-### Challenge 2: Double Q-Learning (7 pts) ⭐⭐
+### Challenge 2: Double Q-Learning (7 pts)
 
 **Reduces maximization bias** in standard Q-Learning by maintaining two independent Q-tables (Q1, Q2) and alternating updates.
 
@@ -221,7 +221,7 @@ Action selection: ε-greedy over (Q1 + Q2) / 2
 
 > Standard Q-Learning overestimates Q-values because `max` is a biased estimator. By decoupling action selection and evaluation across two tables, Double Q-Learning produces more accurate value estimates.
 
-### Challenge 3: Experience Replay (8 pts) ⭐⭐⭐
+### Challenge 3: Experience Replay (8 pts)
 
 **Stores transitions** `(s, a, r, s', done)` in a replay buffer (capacity=10,000) and samples random mini-batches for learning.
 
@@ -263,33 +263,13 @@ a2/
 
 ---
 
-## Grading
-
-| Component | Weight | Status |
-|-----------|--------|--------|
-| Monte Carlo Control | 30% | ✅ Implemented |
-| Q-Learning (TD Control) | 30% | ✅ Implemented |
-| Experiments & Analysis | 25% | ✅ HPO + comparison |
-| Code Quality | 15% | ✅ Documented |
-| **Bonus: SARSA** | +5 pts | ✅ Complete |
-| **Bonus: Double Q-Learning** | +7 pts | ✅ Complete |
-| **Bonus: Experience Replay** | +8 pts | ✅ Complete |
-
 ### Evaluate
 
 ```bash
 python evaluate_submission.py --student_file user_code.py --method all --seed 42 --min_reward 220 --eval_seeds 3
+python evaluate_submission.py --student_file user_code.py --method td
+python evaluate_submission.py --student_file user_code.py --method mc
 ```
 
 ---
 
-## References
-
-- [Sutton & Barto — Reinforcement Learning: An Introduction (2nd ed.)](http://incompleteideas.net/book/the-book-2nd.html)
-- [Monte Carlo Methods — Ch. 5](http://incompleteideas.net/book/ebook/node49.html)
-- [Q-Learning — Ch. 6](http://incompleteideas.net/book/ebook/node47.html)
-- [gym-pybullet-drones](https://github.com/utiasDSL/gym-pybullet-drones)
-
-## Acknowledgements
-
-Thanks to Sadbhav Singh [(@sadbhavsingh16)](https://github.com/sadbhavsingh16) for his help in preparing this assignment.

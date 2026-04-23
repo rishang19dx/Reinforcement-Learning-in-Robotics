@@ -1,0 +1,32 @@
+{
+  "Monte Carlo": {
+    "eval_mean": 331.0991640049917,
+    "eval_std": 5.684341886080802e-14,
+    "final_50_avg": 307.37735115557064,
+    "convergence_episode": 428
+  },
+  "Q-Learning": {
+    "eval_mean": 448.5542465316341,
+    "eval_std": 5.684341886080802e-14,
+    "final_50_avg": 392.10900144212513,
+    "convergence_episode": 432
+  },
+  "SARSA": {
+    "eval_mean": 410.55703663320367,
+    "eval_std": 0.0,
+    "final_50_avg": 316.6661962130458,
+    "convergence_episode": 339
+  },
+  "Double Q-Learning": {
+    "eval_mean": 410.55703663320367,
+    "eval_std": 0.0,
+    "final_50_avg": 379.29179926357295,
+    "convergence_episode": 446
+  },
+  "Experience Replay": {
+    "eval_mean": 250.20038083324926,
+    "eval_std": 0.0,
+    "final_50_avg": 289.2626380954812,
+    "convergence_episode": 109
+  }
+}

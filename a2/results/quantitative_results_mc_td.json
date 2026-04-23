@@ -1,0 +1,14 @@
+{
+  "Monte Carlo": {
+    "eval_mean": 374.64105246821066,
+    "eval_std": 0.0,
+    "final_50_avg": 254.63056282502816,
+    "convergence_episode": 24
+  },
+  "Q-Learning": {
+    "eval_mean": 422.57884821900586,
+    "eval_std": 5.684341886080802e-14,
+    "final_50_avg": 409.0559423053809,
+    "convergence_episode": 257
+  }
+}

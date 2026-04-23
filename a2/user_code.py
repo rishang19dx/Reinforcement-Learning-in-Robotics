@@ -34,18 +34,22 @@ ALPHA = 0.1
 # HELPER FUNCTIONS (Do not modify)
 # ========================================
 
-def discretize_state(state, num_bins=NUM_BINS):
-    """Convert continuous state to discrete bins."""
+def discretize_state(state, num_bins=NUM_BINS, target_pos=None):
+    """Convert continuous relative error to discrete bins."""
+    if target_pos is None:
+        target_pos = np.array([0, 0, 1])
+
     state = np.asarray(state)
     if state.ndim == 2:
         state = state[0, 0:3]
     else:
         state = state[0:3]
 
-    bounds = np.array([[-1, 1], [-1, 1], [0, 2]])
+    error = target_pos - state
+    bounds = np.array([[-1.5, 1.5], [-1.5, 1.5], [-1.5, 1.5]])
 
     discrete = []
-    for val, (low, high) in zip(state, bounds):
+    for val, (low, high) in zip(error, bounds):
         val = np.clip(val, low, high)
         normalized = (val - low) / (high - low)
         bin_idx = int(normalized * num_bins)
@@ -93,13 +97,13 @@ def evaluate_policy(env, q_table, num_episodes=10):
 
     for _ in range(num_episodes):
         state, _ = env.reset()
-        state = discretize_state(extract_position(state))
+        state = discretize_state(extract_position(state), target_pos=env.TARGET_POS)
         total_reward = 0
 
         for _ in range(MAX_STEPS):
             action = np.argmax(q_table[state])
             next_state, reward, terminated, truncated, _ = env.step(format_action(action))
-            next_state = discretize_state(extract_position(next_state))
+            next_state = discretize_state(extract_position(next_state), target_pos=env.TARGET_POS)
 
             total_reward += reward
             state = next_state
@@ -135,7 +139,7 @@ def run_monte_carlo(env, num_episodes=NUM_EPISODES, epsilon=EPSILON, gamma=GAMMA
     for episode in range(num_episodes):
         # ----- Generate a full episode -----
         obs, _ = env.reset()
-        state = discretize_state(extract_position(obs))
+        state = discretize_state(extract_position(obs), target_pos=env.TARGET_POS)
 
         trajectory = []          # list of (state, action, reward)
         total_reward = 0.0
@@ -146,7 +150,7 @@ def run_monte_carlo(env, num_episodes=NUM_EPISODES, epsilon=EPSILON, gamma=GAMMA
             trajectory.append((state, action, reward))
             total_reward += reward
 
-            state = discretize_state(extract_position(next_obs))
+            state = discretize_state(extract_position(next_obs), target_pos=env.TARGET_POS)
             if terminated or truncated:
                 break
 
@@ -191,13 +195,13 @@ def run_q_learning(env, num_episodes=NUM_EPISODES, epsilon=EPSILON, gamma=GAMMA,
 
     for episode in range(num_episodes):
         obs, _ = env.reset()
-        state = discretize_state(extract_position(obs))
+        state = discretize_state(extract_position(obs), target_pos=env.TARGET_POS)
         total_reward = 0.0
 
         for _ in range(MAX_STEPS):
             action = choose_action(q_table, state, epsilon)
             next_obs, reward, terminated, truncated, _ = env.step(format_action(action))
-            next_state = discretize_state(extract_position(next_obs))
+            next_state = discretize_state(extract_position(next_obs), target_pos=env.TARGET_POS)
 
             # Q-Learning (off-policy) update
             best_next_q = np.max(q_table[next_state])
